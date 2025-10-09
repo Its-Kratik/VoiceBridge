@@ -1,56 +1,59 @@
 import streamlit as st
-from transformers import AutoTokenizer, AutoModelForSeq2SeqLM
 from gtts import gTTS
 import tempfile
 
 st.set_page_config(page_title="Hindi ↔ Sanskrit Translator", page_icon="🪔", layout="centered")
+st.title("🪔 Hindi ↔ Sanskrit Text & Voice Translator (Lite Version)")
 
-st.title("🪔 Hindi ↔ Sanskrit Text & Voice Translator")
+# --- Simple rule-based Hindi ↔ Sanskrit dictionary ---
+hindi_to_sanskrit = {
+    "नमस्ते": "नमः",
+    "आप": "त्वम्",
+    "कैसे": "कथम्",
+    "हैं": "असि",
+    "मैं": "अहम्",
+    "मेरा": "मम",
+    "घर": "गृहः",
+    "जल": "वारि",
+    "पुस्तक": "पुस्तकम्",
+    "विद्यालय": "पाठशाला",
+    "धन्यवाद": "धन्यः",
+    "खाना": "भोजनम्"
+}
 
-# --- Load model (small, public) ---
-@st.cache_resource
-def load_model():
-    model_name = "sanskrit-ai/hindi-sanskrit-translation"  # small + fast
-    tokenizer = AutoTokenizer.from_pretrained(model_name)
-    model = AutoModelForSeq2SeqLM.from_pretrained(model_name)
-    return model, tokenizer
+sanskrit_to_hindi = {v: k for k, v in hindi_to_sanskrit.items()}
 
-model, tokenizer = load_model()
+def translate_text(text, direction):
+    words = text.strip().split()
+    translated = []
+    for w in words:
+        if direction == "Hindi → Sanskrit":
+            translated.append(hindi_to_sanskrit.get(w, w))
+        else:
+            translated.append(sanskrit_to_hindi.get(w, w))
+    return " ".join(translated)
 
-# --- Translation function ---
-def translate_text(text, src="hin", tgt="san"):
-    if not text.strip():
-        return ""
-    inputs = tokenizer(text, return_tensors="pt", truncation=True)
-    outputs = model.generate(**inputs, max_length=200)
-    return tokenizer.decode(outputs[0], skip_special_tokens=True)
-
-# --- UI selection ---
+# --- UI ---
 direction = st.radio("Select Translation Direction:", ["Hindi → Sanskrit", "Sanskrit → Hindi"])
 text_input = st.text_area("Enter text here:", placeholder="Type your Hindi or Sanskrit text...")
 
 if st.button("Translate"):
-    with st.spinner("Translating..."):
-        if direction == "Hindi → Sanskrit":
-            translated = translate_text(text_input, src="hin", tgt="san")
-        else:
-            translated = translate_text(text_input, src="san", tgt="hin")
-
-    if translated:
+    if text_input.strip():
+        translated = translate_text(text_input, direction)
         st.success("✅ Translation complete:")
         st.write(translated)
 
-        # --- Convert to Speech ---
+        # --- Text-to-speech ---
         try:
             lang_code = "sa" if direction == "Hindi → Sanskrit" else "hi"
             tts = gTTS(text=translated, lang=lang_code)
             with tempfile.NamedTemporaryFile(delete=False, suffix=".mp3") as fp:
                 tts.save(fp.name)
                 st.audio(fp.name, format="audio/mp3")
-        except Exception as e:
-            st.warning("Text-to-speech not available for this language on gTTS.")
+        except Exception:
+            st.warning("Text-to-speech not available for this language.")
     else:
-        st.warning("No translation found. Please try again.")
+        st.warning("Please enter some text to translate.")
 
 st.markdown("---")
-st.markdown("👩‍💻 *Built using Streamlit + Transformers + gTTS*")
+st.markdown("💡 *Offline-compatible lightweight version — perfect for Streamlit Cloud Free Tier*")
