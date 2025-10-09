@@ -1,0 +1,8 @@
+streamlit
+transformers
+torch
+gtts
+indic-nlp-library
+indic-transliteration
+openai-whisper
+pydub
