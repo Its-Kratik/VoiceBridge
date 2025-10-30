@@ -1,0 +1,1243 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Voicebridge</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif;
+            background: #f5f5f5;
+            min-height: 100vh;
+            padding-bottom: 80px;
+        }
+
+        .top-bar {
+            background: #000;
+            padding: 10px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .app-icon {
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(135deg, #ff6b35 0%, #f7931e 100%);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            font-size: 14px;
+        }
+
+        .voice-indicator {
+            color: white;
+            font-size: 20px;
+        }
+
+        .status-icon {
+            color: #ff6b35;
+            font-size: 20px;
+        }
+
+        .header {
+            background: white;
+            padding: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+        }
+
+        .menu-icon {
+            width: 30px;
+            height: 24px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            cursor: pointer;
+        }
+
+        .menu-icon span {
+            width: 100%;
+            height: 3px;
+            background: #333;
+            border-radius: 2px;
+            transition: all 0.3s;
+        }
+
+        .menu-icon.active span:nth-child(1) {
+            transform: rotate(45deg) translate(8px, 8px);
+        }
+
+        .menu-icon.active span:nth-child(2) {
+            opacity: 0;
+        }
+
+        .menu-icon.active span:nth-child(3) {
+            transform: rotate(-45deg) translate(7px, -7px);
+        }
+
+        .title {
+            font-size: 22px;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .translate-icon {
+            width: 30px;
+            height: 30px;
+            cursor: pointer;
+        }
+
+        .sidebar {
+            position: fixed;
+            left: -100%;
+            top: 0;
+            width: 80%;
+            max-width: 350px;
+            height: 100%;
+            background: white;
+            box-shadow: 2px 0 10px rgba(0,0,0,0.1);
+            transition: left 0.3s;
+            z-index: 1000;
+            overflow-y: auto;
+        }
+
+        .sidebar.active {
+            left: 0;
+        }
+
+        .sidebar-header {
+            padding: 30px 20px;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        .sidebar-logo {
+            width: 150px;
+        }
+
+        .back-btn {
+            width: 50px;
+            height: 50px;
+            background: white;
+            border: none;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-size: 24px;
+            margin-top: 15px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .sidebar-menu {
+            padding: 20px 0;
+        }
+
+        .menu-item {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            padding: 20px 30px;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+
+        .menu-item:hover {
+            background: #f5f5f5;
+        }
+
+        .menu-item-icon {
+            font-size: 24px;
+            color: #666;
+        }
+
+        .menu-item-text {
+            font-size: 18px;
+            color: #333;
+        }
+
+        .overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            display: none;
+            z-index: 999;
+        }
+
+        .overlay.active {
+            display: block;
+        }
+
+        .language-selector {
+            background: white;
+            margin: 20px;
+            padding: 30px 20px;
+            border-radius: 20px;
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+            position: relative;
+        }
+
+        .language {
+            font-size: 18px;
+            font-weight: 500;
+            color: #333;
+            cursor: pointer;
+            padding: 8px 15px;
+            border-radius: 10px;
+            transition: all 0.3s;
+            position: relative;
+        }
+
+        .language:hover {
+            background: #f5f5f5;
+        }
+
+        .swap-btn {
+            width: 60px;
+            height: 60px;
+            background: #1a1a1a;
+            border: none;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: transform 0.3s;
+        }
+
+        .swap-btn:hover {
+            transform: rotate(180deg);
+        }
+
+        .swap-icon {
+            color: white;
+            font-size: 24px;
+        }
+
+        .content-area {
+            display: none;
+        }
+
+        .content-area.active {
+            display: block;
+        }
+
+        .translation-box {
+            background: white;
+            margin: 20px;
+            padding: 25px;
+            border-radius: 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+            position: relative;
+        }
+
+        .translation-box::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            border-radius: 20px 20px 0 0;
+        }
+
+        .source-box::before {
+            background: #ff6b35;
+        }
+
+        .target-box::before {
+            background: #00d4aa;
+        }
+
+        .box-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .lang-label {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 16px;
+            font-weight: 500;
+        }
+
+        .waveform {
+            width: 35px;
+            height: 35px;
+            background: #ff6b35;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 16px;
+        }
+
+        .waveform.target {
+            background: #00d4aa;
+        }
+
+        .speaker-icon {
+            width: 35px;
+            height: 35px;
+            cursor: pointer;
+            padding: 5px;
+            border-radius: 50%;
+            transition: background 0.3s;
+        }
+
+        .speaker-icon:hover {
+            background: #f5f5f5;
+        }
+
+        .text-input {
+            width: 100%;
+            min-height: 100px;
+            border: none;
+            outline: none;
+            font-size: 16px;
+            color: #333;
+            resize: none;
+            font-family: inherit;
+            margin: 15px 0;
+        }
+
+        .text-input::placeholder {
+            color: #999;
+        }
+
+        .box-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 15px;
+        }
+
+        .copy-btn, .share-btn {
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 24px;
+            color: #666;
+            padding: 8px;
+            border-radius: 8px;
+            transition: background 0.3s;
+        }
+
+        .copy-btn:hover, .share-btn:hover {
+            background: #f5f5f5;
+        }
+
+        .feedback-buttons {
+            display: flex;
+            gap: 10px;
+        }
+
+        .thumb-btn {
+            background: white;
+            border: 1px solid #ddd;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s;
+        }
+
+        .thumb-btn:hover {
+            background: #f5f5f5;
+        }
+
+        .thumb-btn.active {
+            background: #ff6b35;
+            color: white;
+            border-color: #ff6b35;
+        }
+
+        .voice-container {
+            padding: 20px;
+        }
+
+        .mic-container {
+            display: flex;
+            justify-content: center;
+            margin: 40px 0;
+        }
+
+        .mic-btn {
+            width: 140px;
+            height: 140px;
+            border-radius: 50%;
+            border: 4px solid #ff6b35;
+            background: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            position: relative;
+        }
+
+        .mic-btn:hover {
+            transform: scale(1.05);
+        }
+
+        .mic-btn.recording {
+            animation: pulse 1.5s infinite;
+            background: #fff5f2;
+        }
+
+        @keyframes pulse {
+            0%, 100% {
+                box-shadow: 0 0 0 0 rgba(255, 107, 53, 0.4);
+            }
+            50% {
+                box-shadow: 0 0 0 30px rgba(255, 107, 53, 0);
+            }
+        }
+
+        .mic-icon {
+            font-size: 60px;
+            color: #ff6b35;
+        }
+
+        .voice-instruction {
+            text-align: center;
+            color: #666;
+            font-size: 16px;
+            margin: 20px 0;
+        }
+
+        .voice-text-display {
+            background: white;
+            padding: 25px;
+            border-radius: 20px;
+            margin: 20px 0;
+            min-height: 100px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+        }
+
+        .converse-container {
+            padding: 20px;
+        }
+
+        .conversation-area {
+            background: white;
+            border-radius: 20px;
+            padding: 20px;
+            margin: 20px 0;
+            min-height: 400px;
+            max-height: 500px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+            overflow-y: auto;
+        }
+
+        .message {
+            margin: 15px 0;
+            padding: 15px;
+            border-radius: 15px;
+            max-width: 80%;
+            animation: slideIn 0.3s;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .message.user {
+            background: #ff6b35;
+            color: white;
+            margin-left: auto;
+            text-align: right;
+        }
+
+        .message.bot {
+            background: #f0f0f0;
+            color: #333;
+        }
+
+        .message-lang {
+            font-size: 12px;
+            opacity: 0.8;
+            margin-bottom: 5px;
+        }
+
+        .message-text {
+            font-size: 16px;
+        }
+
+        .converse-controls {
+            display: flex;
+            justify-content: space-around;
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .converse-mic-btn {
+            flex: 1;
+            padding: 20px;
+            border-radius: 15px;
+            border: 3px solid;
+            background: white;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 500;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        .converse-mic-btn.lang1 {
+            border-color: #ff6b35;
+            color: #ff6b35;
+        }
+
+        .converse-mic-btn.lang2 {
+            border-color: #00d4aa;
+            color: #00d4aa;
+        }
+
+        .converse-mic-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+
+        .converse-mic-btn.recording {
+            animation: pulse 1.5s infinite;
+        }
+
+        .bottom-nav {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: white;
+            display: flex;
+            justify-content: space-around;
+            padding: 12px 0;
+            box-shadow: 0 -2px 10px rgba(0,0,0,0.05);
+        }
+
+        .nav-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 5px;
+            cursor: pointer;
+            color: #666;
+            font-size: 13px;
+            transition: color 0.3s;
+            padding: 5px 15px;
+        }
+
+        .nav-item.active {
+            color: #ff6b35;
+        }
+
+        .nav-icon {
+            font-size: 24px;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 2000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: white;
+            padding: 30px;
+            border-radius: 20px;
+            max-width: 400px;
+            width: 90%;
+            text-align: center;
+        }
+
+        .modal-content h2 {
+            margin-bottom: 15px;
+            color: #333;
+        }
+
+        .modal-content p {
+            color: #666;
+            margin-bottom: 20px;
+        }
+
+        .modal-btn {
+            background: #ff6b35;
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 500;
+        }
+
+        .lang-dropdown {
+            position: absolute;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+            padding: 10px 0;
+            display: none;
+            z-index: 100;
+            min-width: 150px;
+            top: 100%;
+            margin-top: 10px;
+        }
+
+        .lang-dropdown.active {
+            display: block;
+        }
+
+        .lang-option {
+            padding: 12px 20px;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+
+        .lang-option:hover {
+            background: #f5f5f5;
+        }
+
+        .lang-wrapper {
+            position: relative;
+        }
+    </style>
+</head>
+<body>
+    <div class="top-bar">
+        <div class="app-icon">VB</div>
+        <div class="voice-indicator">||||</div>
+        <div class="status-icon">🟡</div>
+    </div>
+
+    <div class="header">
+        <div class="menu-icon" id="menuBtn">
+            <span></span>
+            <span></span>
+            <span></span>
+        </div>
+        <div class="title" id="pageTitle">Text Translate</div>
+        <svg class="translate-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M5 8h14M9 21h6M7 21l1-12M16 21l-1-12M12 3v5M14 8h6M4 8h6"></path>
+        </svg>
+    </div>
+
+    <div class="overlay" id="overlay"></div>
+
+    <div class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <svg class="sidebar-logo" viewBox="0 0 200 60" xmlns="http://www.w3.org/2000/svg">
+                <defs>
+                    <linearGradient id="grad1" x1="0%" y1="0%" x2="100%" y2="0%">
+                        <stop offset="0%" style="stop-color:#0066cc;stop-opacity:1" />
+                        <stop offset="100%" style="stop-color:#00cc99;stop-opacity:1" />
+                    </linearGradient>
+                </defs>
+                <path d="M 10 30 Q 20 10, 30 30 T 50 30" stroke="url(#grad1)" stroke-width="4" fill="none"/>
+                <text x="60" y="40" font-family="Arial, sans-serif" font-size="28" font-weight="bold" fill="#333">Voicebridge</text>
+            </svg>
+            <button class="back-btn" onclick="toggleSidebar()">←</button>
+        </div>
+        <div class="sidebar-menu">
+            <div class="menu-item" onclick="showModal('About Us', 'Voicebridge is a powerful translation app supporting Hindi, English, and Sanskrit. Communicate across languages seamlessly.')">
+                <div class="menu-item-icon">ℹ️</div>
+                <div class="menu-item-text">About Us</div>
+            </div>
+            <div class="menu-item" onclick="showModal('Terms of Services', 'By using Voicebridge, you agree to our terms and conditions.')">
+                <div class="menu-item-icon">📄</div>
+                <div class="menu-item-text">Terms of Services</div>
+            </div>
+            <div class="menu-item" onclick="showModal('Privacy Policy', 'We respect your privacy and protect your data with industry-standard security measures.')">
+                <div class="menu-item-icon">🔒</div>
+                <div class="menu-item-text">Privacy Policy</div>
+            </div>
+            <div class="menu-item" onclick="showModal('Settings', 'Customize your Voicebridge experience.')">
+                <div class="menu-item-icon">⚙️</div>
+                <div class="menu-item-text">Settings</div>
+            </div>
+            <div class="menu-item" onclick="shareApp()">
+                <div class="menu-item-icon">📤</div>
+                <div class="menu-item-text">Share App</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="language-selector">
+        <div class="lang-wrapper">
+            <div class="language" id="sourceLang" onclick="showLangDropdown('source', event)">Hindi</div>
+            <div class="lang-dropdown" id="sourceLangDropdown">
+                <div class="lang-option" onclick="selectLanguage('source', 'Hindi', event)">Hindi</div>
+                <div class="lang-option" onclick="selectLanguage('source', 'English', event)">English</div>
+                <div class="lang-option" onclick="selectLanguage('source', 'Sanskrit', event)">Sanskrit</div>
+            </div>
+        </div>
+        <button class="swap-btn" onclick="swapLanguages()">
+            <div class="swap-icon">⇄</div>
+        </button>
+        <div class="lang-wrapper">
+            <div class="language" id="targetLang" onclick="showLangDropdown('target', event)">English</div>
+            <div class="lang-dropdown" id="targetLangDropdown">
+                <div class="lang-option" onclick="selectLanguage('target', 'Hindi', event)">Hindi</div>
+                <div class="lang-option" onclick="selectLanguage('target', 'English', event)">English</div>
+                <div class="lang-option" onclick="selectLanguage('target', 'Sanskrit', event)">Sanskrit</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- TEXT TAB CONTENT -->
+    <div class="content-area active" id="textContent">
+        <div class="translation-box source-box">
+            <div class="box-header">
+                <div class="lang-label">
+                    <div class="waveform">🎵</div>
+                    <span id="sourceLabel" style="color: #ff6b35;">Hindi</span>
+                </div>
+                <svg class="speaker-icon" viewBox="0 0 24 24" fill="currentColor" onclick="speak('source')">
+                    <path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02z"/>
+                </svg>
+            </div>
+            <textarea class="text-input" id="sourceText" placeholder="Type text here..." oninput="translateText()"></textarea>
+            <div class="box-footer">
+                <button class="copy-btn" onclick="copyText('source')" title="Copy">📋</button>
+            </div>
+        </div>
+
+        <div class="translation-box target-box">
+            <div class="box-header">
+                <div class="lang-label">
+                    <div class="waveform target">🎵</div>
+                    <span id="targetLabel" style="color: #00d4aa;">English</span>
+                </div>
+                <svg class="speaker-icon" viewBox="0 0 24 24" fill="currentColor" onclick="speak('target')">
+                    <path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02z"/>
+                </svg>
+            </div>
+            <div class="text-input" id="targetText" style="color: #666; cursor: default;">Translation will appear here...</div>
+            <div class="box-footer">
+                <div style="display: flex; gap: 10px;">
+                    <button class="copy-btn" onclick="copyText('target')" title="Copy">📋</button>
+                    <button class="share-btn" onclick="shareTranslation()" title="Share">🔗</button>
+                </div>
+                <div class="feedback-buttons">
+                    <button class="thumb-btn" onclick="giveFeedback(event, 'up')" title="Good translation">👍</button>
+                    <button class="thumb-btn" onclick="giveFeedback(event, 'down')" title="Poor translation">👎</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- VOICE TAB CONTENT -->
+    <div class="content-area" id="voiceContent">
+        <div class="voice-container">
+            <div class="voice-instruction">Tap the microphone to speak</div>
+            <div class="mic-container">
+                <button class="mic-btn" id="voiceMicBtn" onclick="toggleVoiceRecording()">
+                    <div class="mic-icon">🎤</div>
+                </button>
+            </div>
+            <div class="voice-text-display" id="voiceSourceDisplay">
+                <div style="color: #ff6b35; font-weight: 500; margin-bottom: 10px;" id="voiceSourceLang">Hindi</div>
+                <div style="color: #666;" id="voiceSourceText">Your speech will appear here...</div>
+            </div>
+            <div class="voice-text-display" id="voiceTargetDisplay">
+                <div style="color: #00d4aa; font-weight: 500; margin-bottom: 10px;" id="voiceTargetLang">English</div>
+                <div style="color: #666;" id="voiceTargetText">Translation will appear here...</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- CONVERSE TAB CONTENT -->
+    <div class="content-area" id="converseContent">
+        <div class="converse-container">
+            <div class="conversation-area" id="conversationArea">
+                <div style="text-align: center; color: #999; padding: 40px 20px;">
+                    Start a conversation by speaking in either language
+                </div>
+            </div>
+            <div class="converse-controls">
+                <button class="converse-mic-btn lang1" id="converseLang1Btn" onclick="converseSpeak('lang1')">
+                    <span>🎤</span>
+                    <span id="converseLang1">Hindi</span>
+                </button>
+                <button class="converse-mic-btn lang2" id="converseLang2Btn" onclick="converseSpeak('lang2')">
+                    <span>🎤</span>
+                    <span id="converseLang2">English</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div class="bottom-nav">
+        <div class="nav-item active" onclick="switchTab(event, 'text')">
+            <div class="nav-icon">📝</div>
+            <div>Text</div>
+        </div>
+        <div class="nav-item" onclick="switchTab(event, 'voice')">
+            <div class="nav-icon">🎤</div>
+            <div>Voice</div>
+        </div>
+        <div class="nav-item" onclick="switchTab(event, 'converse')">
+            <div class="nav-icon">💬</div>
+            <div>Converse</div>
+        </div>
+        <div class="nav-item" onclick="switchTab(event, 'scene')">
+            <div class="nav-icon">📷</div>
+            <div>Scene</div>
+        </div>
+        <div class="nav-item" onclick="switchTab(event, 'browse')">
+            <div class="nav-icon">🔗</div>
+            <div>Browse</div>
+        </div>
+    </div>
+
+    <div class="modal" id="modal">
+        <div class="modal-content">
+            <h2 id="modalTitle"></h2>
+            <p id="modalText"></p>
+            <button class="modal-btn" onclick="closeModal()">Close</button>
+        </div>
+    </div>
+
+    <script>
+        // Translation dictionary
+        const translations = {
+            'Hindi-English': {
+                'नमस्ते': 'Hello',
+                'धन्यवाद': 'Thank you',
+                'कैसे हो': 'How are you',
+                'मेरा नाम': 'My name is',
+                'शुभ प्रभात': 'Good morning',
+                'शुभ रात्रि': 'Good night'
+            },
+            'Hindi-Sanskrit': {
+                'नमस्ते': 'नमस्कारः',
+                'धन्यवाद': 'धन्यवादः',
+                'कैसे हो': 'कथम् अस्ति',
+                'मेरा नाम': 'मम नाम',
+                'शुभ प्रभात': 'सुप्रभातम्',
+                'शुभ रात्रि': 'शुभ रात्रिः'
+            },
+            'English-Hindi': {
+                'hello': 'नमस्ते',
+                'thank you': 'धन्यवाद',
+                'how are you': 'कैसे हो',
+                'my name is': 'मेरा नाम',
+                'good morning': 'शुभ प्रभात',
+                'good night': 'शुभ रात्रि'
+            },
+            'English-Sanskrit': {
+                'hello': 'नमस्कारः',
+                'thank you': 'धन्यवादः',
+                'how are you': 'कथम् अस्ति',
+                'my name is': 'मम नाम',
+                'good morning': 'सुप्रभातम्',
+                'good night': 'शुभ रात्रिः'
+            },
+            'Sanskrit-Hindi': {
+                'नमस्कारः': 'नमस्ते',
+                'धन्यवादः': 'धन्यवाद',
+                'कथम् अस्ति': 'कैसे हो',
+                'मम नाम': 'मेरा नाम',
+                'सुप्रभातम्': 'शुभ प्रभात',
+                'शुभ रात्रिः': 'शुभ रात्रि'
+            },
+            'Sanskrit-English': {
+                'नमस्कारः': 'Hello',
+                'धन्यवादः': 'Thank you',
+                'कथम् अस्ति': 'How are you',
+                'मम नाम': 'My name is',
+                'सुप्रभातम्': 'Good morning',
+                'शुभ रात्रिः': 'Good night'
+            }
+        };
+
+        // Sidebar toggle
+        function toggleSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            const overlay = document.getElementById('overlay');
+            const menuBtn = document.getElementById('menuBtn');
+            
+            sidebar.classList.toggle('active');
+            overlay.classList.toggle('active');
+            menuBtn.classList.toggle('active');
+        }
+
+        document.getElementById('menuBtn').addEventListener('click', toggleSidebar);
+        document.getElementById('overlay').addEventListener('click', toggleSidebar);
+
+        // Language dropdown
+        function showLangDropdown(type, e) {
+            e.stopPropagation();
+            const dropdown = document.getElementById(type + 'LangDropdown');
+            const allDropdowns = document.querySelectorAll('.lang-dropdown');
+            allDropdowns.forEach(d => {
+                if (d !== dropdown) d.classList.remove('active');
+            });
+            dropdown.classList.toggle('active');
+        }
+
+        function selectLanguage(type, lang, e) {
+            e.stopPropagation();
+            document.getElementById(type + 'Lang').textContent = lang;
+            document.getElementById(type + 'Label').textContent = lang;
+            document.getElementById(type + 'LangDropdown').classList.remove('active');
+            
+            if (type === 'source') {
+                document.getElementById('voiceSourceLang').textContent = lang;
+                document.getElementById('converseLang1').textContent = lang;
+            } else {
+                document.getElementById('voiceTargetLang').textContent = lang;
+                document.getElementById('converseLang2').textContent = lang;
+            }
+            
+            translateText();
+        }
+
+        document.addEventListener('click', function(e) {
+            if (!e.target.closest('.language') && !e.target.closest('.lang-dropdown')) {
+                document.querySelectorAll('.lang-dropdown').forEach(d => d.classList.remove('active'));
+            }
+        });
+
+        // Language swap
+        function swapLanguages() {
+            const sourceLang = document.getElementById('sourceLang').textContent;
+            const targetLang = document.getElementById('targetLang').textContent;
+            const sourceText = document.getElementById('sourceText').value;
+            const targetText = document.getElementById('targetText').textContent;
+            
+            document.getElementById('sourceLang').textContent = targetLang;
+            document.getElementById('targetLang').textContent = sourceLang;
+            document.getElementById('sourceLabel').textContent = targetLang;
+            document.getElementById('targetLabel').textContent = sourceLang;
+            
+            document.getElementById('voiceSourceLang').textContent = targetLang;
+            document.getElementById('voiceTargetLang').textContent = sourceLang;
+            document.getElementById('converseLang1').textContent = targetLang;
+            document.getElementById('converseLang2').textContent = sourceLang;
+            
+            document.getElementById('sourceText').value = targetText === 'Translation will appear here...' ? '' : targetText;
+            document.getElementById('targetText').textContent = sourceText || 'Translation will appear here...';
+        }
+
+        // Translation
+        function translateText() {
+            const sourceText = document.getElementById('sourceText').value.trim();
+            const sourceLang = document.getElementById('sourceLang').textContent;
+            const targetLang = document.getElementById('targetLang').textContent;
+            const targetTextEl = document.getElementById('targetText');
+            
+            if (!sourceText) {
+                targetTextEl.textContent = 'Translation will appear here...';
+                return;
+            }
+            
+            const key = sourceLang + '-' + targetLang;
+            const dict = translations[key] || {};
+            
+            let translation = dict[sourceText.toLowerCase()];
+            
+            if (!translation) {
+                translation = `[${targetLang}] ${sourceText}`;
+            }
+            
+            targetTextEl.textContent = translation;
+        }
+
+        // Copy text
+        function copyText(type) {
+            const text = type === 'source' 
+                ? document.getElementById('sourceText').value 
+                : document.getElementById('targetText').textContent;
+            
+            if (text && text !== 'Translation will appear here...') {
+                navigator.clipboard.writeText(text).then(function() {
+                    showToast('Copied to clipboard!');
+                }).catch(function() {
+                    showToast('Copy failed');
+                });
+            }
+        }
+
+        // Share translation
+        function shareTranslation() {
+            const sourceText = document.getElementById('sourceText').value;
+            const targetText = document.getElementById('targetText').textContent;
+            
+            if (targetText && targetText !== 'Translation will appear here...') {
+                if (navigator.share) {
+                    navigator.share({
+                        title: 'Voicebridge Translation',
+                        text: sourceText + '\n→\n' + targetText
+                    });
+                } else {
+                    showToast('Share feature not available');
+                }
+            }
+        }
+
+        // Feedback
+        function giveFeedback(e, type) {
+            const buttons = document.querySelectorAll('.thumb-btn');
+            buttons.forEach(function(btn) {
+                btn.classList.remove('active');
+            });
+            e.target.closest('.thumb-btn').classList.add('active');
+            showToast(type === 'up' ? 'Thank you for your feedback!' : 'We will improve!');
+        }
+
+        // Text-to-speech
+        function speak(type) {
+            const text = type === 'source' 
+                ? document.getElementById('sourceText').value 
+                : document.getElementById('targetText').textContent;
+            
+            if (text && text !== 'Translation will appear here...') {
+                if ('speechSynthesis' in window) {
+                    const sourceLang = document.getElementById('sourceLang').textContent;
+                    const targetLang = document.getElementById('targetLang').textContent;
+                    const utterance = new SpeechSynthesisUtterance(text);
+                    
+                    const langMap = {
+                        'Hindi': 'hi-IN',
+                        'English': 'en-US',
+                        'Sanskrit': 'hi-IN'
+                    };
+                    
+                    utterance.lang = type === 'source' ? langMap[sourceLang] : langMap[targetLang];
+                    speechSynthesis.speak(utterance);
+                    
+                    showToast('Playing audio...');
+                } else {
+                    showToast('Speech not supported');
+                }
+            }
+        }
+
+        // Voice recording
+        let voiceRecording = false;
+
+        function toggleVoiceRecording() {
+            const micBtn = document.getElementById('voiceMicBtn');
+            voiceRecording = !voiceRecording;
+            
+            if (voiceRecording) {
+                micBtn.classList.add('recording');
+                document.getElementById('voiceSourceText').textContent = 'Listening...';
+                
+                setTimeout(function() {
+                    if (voiceRecording) {
+                        const sampleTexts = {
+                            'Hindi': 'नमस्ते, आप कैसे हैं?',
+                            'English': 'Hello, how are you?',
+                            'Sanskrit': 'नमस्कारः, कथम् अस्ति?'
+                        };
+                        
+                        const sourceLang = document.getElementById('voiceSourceLang').textContent;
+                        const targetLang = document.getElementById('voiceTargetLang').textContent;
+                        const sourceText = sampleTexts[sourceLang];
+                        
+                        document.getElementById('voiceSourceText').textContent = sourceText;
+                        
+                        const key = sourceLang + '-' + targetLang;
+                        const dict = translations[key] || {};
+                        const translation = dict[sourceText.toLowerCase()] || '[' + targetLang + '] ' + sourceText;
+                        
+                        document.getElementById('voiceTargetText').textContent = translation;
+                        
+                        micBtn.classList.remove('recording');
+                        voiceRecording = false;
+                    }
+                }, 2000);
+            } else {
+                micBtn.classList.remove('recording');
+            }
+        }
+
+        // Converse mode
+        let converseRecording = null;
+
+        function converseSpeak(langType) {
+            const btn = document.getElementById('converse' + (langType === 'lang1' ? 'Lang1' : 'Lang2') + 'Btn');
+            const conversationArea = document.getElementById('conversationArea');
+            
+            if (converseRecording) return;
+            
+            converseRecording = langType;
+            btn.classList.add('recording');
+            
+            setTimeout(function() {
+                if (converseRecording === langType) {
+                    const lang1 = document.getElementById('converseLang1').textContent;
+                    const lang2 = document.getElementById('converseLang2').textContent;
+                    
+                    const sampleTexts = {
+                        'Hindi': ['नमस्ते', 'धन्यवाद', 'कैसे हो'],
+                        'English': ['Hello', 'Thank you', 'How are you'],
+                        'Sanskrit': ['नमस्कारः', 'धन्यवादः', 'कथम् अस्ति']
+                    };
+                    
+                    const currentLang = langType === 'lang1' ? lang1 : lang2;
+                    const otherLang = langType === 'lang1' ? lang2 : lang1;
+                    
+                    const randomIndex = Math.floor(Math.random() * 3);
+                    const spokenText = sampleTexts[currentLang][randomIndex];
+                    
+                    const key = currentLang + '-' + otherLang;
+                    const dict = translations[key] || {};
+                    const translatedText = dict[spokenText.toLowerCase()] || '[' + otherLang + '] ' + spokenText;
+                    
+                    if (conversationArea.querySelector('div[style*="text-align: center"]')) {
+                        conversationArea.innerHTML = '';
+                    }
+                    
+                    const userMsg = document.createElement('div');
+                    userMsg.className = 'message user';
+                    userMsg.innerHTML = '<div class="message-lang">' + currentLang + '</div><div class="message-text">' + spokenText + '</div>';
+                    conversationArea.appendChild(userMsg);
+                    
+                    setTimeout(function() {
+                        const botMsg = document.createElement('div');
+                        botMsg.className = 'message bot';
+                        botMsg.innerHTML = '<div class="message-lang">' + otherLang + '</div><div class="message-text">' + translatedText + '</div>';
+                        conversationArea.appendChild(botMsg);
+                        conversationArea.scrollTop = conversationArea.scrollHeight;
+                    }, 500);
+                    
+                    btn.classList.remove('recording');
+                    converseRecording = null;
+                }
+            }, 2000);
+        }
+
+        // Tab switching
+        function switchTab(e, tab) {
+            document.querySelectorAll('.nav-item').forEach(function(item) {
+                item.classList.remove('active');
+            });
+            e.target.closest('.nav-item').classList.add('active');
+            
+            document.querySelectorAll('.content-area').forEach(function(area) {
+                area.classList.remove('active');
+            });
+            
+            const titles = {
+                text: 'Text Translate',
+                voice: 'Voice Translate',
+                converse: 'Converse',
+                scene: 'Scene Translate',
+                browse: 'Browse'
+            };
+            
+            document.getElementById('pageTitle').textContent = titles[tab] || 'Voicebridge';
+            
+            if (tab === 'text') {
+                document.getElementById('textContent').classList.add('active');
+            } else if (tab === 'voice') {
+                document.getElementById('voiceContent').classList.add('active');
+            } else if (tab === 'converse') {
+                document.getElementById('converseContent').classList.add('active');
+            } else {
+                showToast(titles[tab] + ' coming soon!');
+            }
+        }
+
+        // Modal functions
+        function showModal(title, text) {
+            document.getElementById('modalTitle').textContent = title;
+            document.getElementById('modalText').textContent = text;
+            document.getElementById('modal').classList.add('active');
+            toggleSidebar();
+        }
+
+        function closeModal() {
+            document.getElementById('modal').classList.remove('active');
+        }
+
+        // Share app
+        function shareApp() {
+            if (navigator.share) {
+                navigator.share({
+                    title: 'Voicebridge',
+                    text: 'Check out Voicebridge - Translate between Hindi, English, and Sanskrit!',
+                    url: window.location.href
+                });
+            } else {
+                showToast('Share feature not available');
+            }
+            toggleSidebar();
+        }
+
+        // Toast notification
+        function showToast(message) {
+            const toast = document.createElement('div');
+            toast.textContent = message;
+            toast.style.cssText = 'position: fixed; bottom: 100px; left: 50%; transform: translateX(-50%); background: #333; color: white; padding: 12px 24px; border-radius: 25px; z-index: 3000; animation: fadeInOut 2s;';
+            
+            const style = document.createElement('style');
+            style.textContent = '@keyframes fadeInOut { 0%, 100% { opacity: 0; } 10%, 90% { opacity: 1; } }';
+            document.head.appendChild(style);
+            
+            document.body.appendChild(toast);
+            setTimeout(function() {
+                toast.remove();
+                style.remove();
+            }, 2000);
+        }
+
+        // Close modal on outside click
+        document.getElementById('modal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                closeModal();
+            }
+        });
+    </script>
+</body>
+</html>
